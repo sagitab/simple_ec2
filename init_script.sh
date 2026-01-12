@@ -17,4 +17,10 @@ newgrp docker
 
 docker ps
 
-ls
+docker pull nginx:latest
+
+docker run --name my-nginx \
+  -v ${PWD}:/usr/share/nginx/html:ro \
+  -v ${PWD}/default.conf:/etc/nginx/conf.d/default.conf:ro \
+  -p 80:80 \
+  -d nginx

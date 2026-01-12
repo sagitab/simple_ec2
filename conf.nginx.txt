@@ -1,0 +1,14 @@
+server {
+  listen 8080;                 # Good default for Cloud Run; works locally too
+  server_name _;
+
+   root /usr/share/nginx/html;  # Where we'll copy the files
+  index index1.html;
+
+  location / {
+    try_files $uri $uri/ =404; # Real static serving; missing files → 404
+  }
+
+  # Custom 404 page
+  error_page 404 /404.html;
+}
