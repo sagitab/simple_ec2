@@ -37,14 +37,14 @@ resource "aws_s3_bucket_policy" "allow_public" {
 resource "aws_s3_object" "index_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "index.html"
-  source       = "${path.module}/templates/index.html"
+  source       = "index.html"
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "error.html"
-  source       = "${path.module}/templates/error.html" 
+  source       = "error.html" 
   content_type = "text/html"
 }
 
