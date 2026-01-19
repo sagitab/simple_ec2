@@ -8,7 +8,7 @@ provider "google" {
 }
 
 module "aws" {
-  source = "./modules/aws"
+  source = "git::https://github.com/sagitab/simple_ec2.git//modules/aws?ref=main"
   count  = var.cloud == "aws" ? 1 : 0
 }
 module "gcp" {
