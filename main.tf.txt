@@ -1,0 +1,81 @@
+
+
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+# 1. Create the Security Group (HTTP Only, NO SSH)
+resource "aws_security_group" "nginx_sg" {
+  name        = "sasha-nginx-web-only"
+  description = "Allow Port 80 for Nginx, block Port 22"
+  vpc_id      = "vpc-0835614ee6f077288"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1" # Allows all outbound traffic for Docker & S3
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# 2. Create the EC2 Instance
+resource "aws_instance" "web_server" {
+  ami           = "ami-07ff62358b87c7116"
+  instance_type = "t2.micro"
+  subnet_id     = "subnet-05af4b9fcf2cdc250"
+  
+  vpc_security_group_ids = [aws_security_group.nginx_sg.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              # 1. Update and Install
+              yum update -y
+              yum install -y docker
+              systemctl start docker
+              systemctl enable docker
+
+              # 2. Add ec2-user to group
+              usermod -a -G docker ec2-user
+
+              # 3. Create the configuration file on the EC2 disk
+              cat <<EOT > /home/ec2-user/default.conf
+              server {
+                  listen 80;
+                  resolver 8.8.8.8;
+                  location / {
+                      proxy_pass https://sasha-devops.s3.us-east-1.amazonaws.com/index.html;
+                      proxy_set_header Host sasha-devops.s3.us-east-1.amazonaws.com;
+                  }
+                  error_page 404 /error.html;
+                  location = /error.html {
+                      proxy_pass https://sasha-devops.s3.us-east-1.amazonaws.com/error.html;
+                      proxy_set_header Host sasha-devops.s3.us-east-1.amazonaws.com;
+                      internal;
+                  }
+              }
+              EOT
+
+              # 4. Run the container
+              docker run --name s3-nginx \
+                -v /home/ec2-user/default.conf:/etc/nginx/conf.d/default.conf:ro \
+                -p 80:80 \
+                -d nginx
+              EOF
+
+  tags = {
+    Name = "Sasha-S3-Nginx"
+  }
+}
+
+# 3. Output the Public IP so you can visit your site
+output "public_ip" {
+  value = aws_instance.web_server.public_ip
+}
