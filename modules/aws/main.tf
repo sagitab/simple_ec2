@@ -37,14 +37,14 @@ resource "aws_s3_bucket_policy" "allow_public" {
 resource "aws_s3_object" "index_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "index.html"
-  source       = "templates/index.html" # Your local file path
+  source       = "${path.module}/templates/index.html" # Your local file path
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "error.html"
-  source       = "templates/error.html" # Your local file path
+  source       = "${path.module}/templates/error.html" # Your local file path
   content_type = "text/html"
 }
 
