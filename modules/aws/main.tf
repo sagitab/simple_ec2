@@ -37,14 +37,15 @@ resource "aws_s3_bucket_policy" "allow_public" {
 resource "aws_s3_object" "index_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "index.html"
-  source       = "index.html"
+  # Look for the file in the same folder as this .tf file
+  source       = "${path.module}/index.html" 
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error_html" {
   bucket       = aws_s3_bucket.sasha_s3.id
   key          = "error.html"
-  source       = "error.html" 
+  source       = "${path.module}/error.html" 
   content_type = "text/html"
 }
 
@@ -131,6 +132,19 @@ resource "aws_instance" "web_server" {
 
   tags = {
     Name = "Sasha-S3-Nginx"
+  }
+}
+
+resource "aws_route53_health_check" "web_check" {
+  ip_address        = aws_instance.web_server.public_ip
+  port              = 80
+  type              = "HTTP"
+  resource_path     = "/"
+  failure_threshold = "3"
+  request_interval  = "30"
+
+  tags = {
+    Name = "Sasha-EC2-Health-Check"
   }
 }
 
